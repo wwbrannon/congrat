@@ -1,0 +1,5 @@
+# big raw data file
+orig/
+
+# really big directory of cached xml responses and raw data
+raw/

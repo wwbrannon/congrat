@@ -1,0 +1,170 @@
+seed_everything: 2969591811
+
+data:
+    class_path: clip_graph.data.datamodule.TRexGraphTextDataModule
+    init_args:
+        data_dir: 'data/trex'
+        seed: ${seed_everything}
+        mlm: false
+        batch_size: 36
+        num_workers: 4
+        pin_memory: true
+
+        # should match what's used below for lm_name or fine-tuned checkpoint
+        tokenizer_name: 'sentence-transformers/all-mpnet-base-v2'
+
+        transductive: false
+        transductive_identity_features: false
+
+model:
+    class_path: clip_graph.lit.LitClipGraph
+    init_args:
+        embed_dim: 768
+        dropout: 0.3
+        tau_init: 3.5
+        max_tau: 4.605  # ~= ln(100)
+        # cycle_length_steps: 297  # number of batch_size batches in dataset
+        cycle_length_steps: null  # doesn't actually seem to help
+
+        sim_smoothing: 0.1
+        sim_weights: 'exp'
+
+        # we do this handling of class name and init arguments ourselves rather
+        # than use jsonargparse's class_path and init_args so that the
+        # models can log their arguments without saving gigantic binary objects
+        gnn_class_name: 'GATMod'
+
+        gnn_node_features_keys:
+            - 'graph_x'
+
+        gnn_params:
+            # what's the input data like? has to match data
+            in_channels: 768  # input feature vector dims, inductive or transductive
+
+            # this goes with transductive_identity_features above: if that's
+            # set to true, the idea is that each node's feature is just its
+            # index, and we learn an arbitrary embedding for each node in the
+            # first layer of the graph model, in which case we have to tell it
+            # how many nodes there are in the whole graph
+            # num_nodes: 8721  # only usable if transductive
+
+            hidden_channels: 64
+            d_feedforward: 128
+            num_layers: 3
+            num_heads: 2
+            dropout: 0.3
+
+        lm_name: 'sentence-transformers/all-mpnet-base-v2'
+        lm_pooling_mode: 'mean'
+        lm_normalize: true
+
+        # this is a numerical stability kludge if needed
+        lm_layernorm_eps: null  # null = don't change LayerNorms' eps
+
+        debug_checks: true  # assert inputs and activations are not inf or nan
+
+        lr: 1.0e-4
+        weight_decay: 0.0
+        eps: 1.0e-4  # this fairly high value helps with numerical stability
+        betas:
+            - 0.9
+            - 0.999
+
+trainer:
+    enable_checkpointing: true
+    callbacks:
+        - class_path: clip_graph.data.callbacks.RebuildContrastiveDataset
+
+        - class_path: pytorch_lightning.callbacks.LearningRateMonitor
+
+        - class_path: pytorch_lightning.callbacks.DeviceStatsMonitor
+
+        - class_path: pytorch_lightning.callbacks.early_stopping.EarlyStopping
+          init_args:
+              monitor: 'val_loss'
+              mode: 'min'
+              patience: 3
+              strict: true
+              min_delta: 0.01
+              check_finite: true
+              divergence_threshold: 3.58  # ~= -log(1/36)
+
+    #
+    # Hardware selection
+    #
+
+    num_nodes: 1
+    accelerator: 'gpu'
+    devices: [1]
+
+    strategy: 'ddp_find_unused_parameters_false'
+
+    #
+    # Mixed precision training
+    #
+
+    precision: 16
+
+    plugins:
+        - class_path: pytorch_lightning.plugins.precision.NativeMixedPrecisionPlugin
+          init_args:
+              precision: 16
+              device: 'cuda'
+              scaler:
+                  class_path: torch.cuda.amp.GradScaler
+                  init_args:
+                      # the default scale of 2**16 overflows early in training
+                      # and makes the gradient unstable
+                      init_scale: 256
+
+    #
+    # Logging
+    #
+
+    log_every_n_steps: 10
+    track_grad_norm: 2  # the 2-norm
+    enable_model_summary: true
+    enable_progress_bar: true
+
+    logger:
+        class_path: pytorch_lightning.loggers.tensorboard.TensorBoardLogger
+        init_args:
+            save_dir: 'lightning_logs/clip-graph/inductive-masked/'
+            name: 'trex'
+            default_hp_metric: false
+            log_graph: false
+
+    #
+    # Debugging features
+    #
+
+    deterministic: false  # GATConv has no deterministic implementation
+    detect_anomaly: false
+
+    #
+    # Limits on epochs/steps/batches/time
+    #
+
+    max_epochs: 20
+    min_epochs: 2
+
+    #
+    # Optimization details
+    #
+
+    # NOTE that this does *not* have the same effect as increasing the batch
+    # size: it takes gradient steps on the basis of more data, but here the
+    # batch size from the loader also determines how hard the task is. With
+    # loader batch size of 64 and accumulate_grad_batches of 2, there are two
+    # (times two, for graph and text) 64-way classification problems to solve;
+    # with a 128 batch size and accumulate_grad_batches of 1 or null, there's
+    # one 128-way problem.
+    accumulate_grad_batches: null
+
+    # NOTE this is very very important to avoid suddenly diverging loss;
+    # the tensorboard plots show the occasional wild spike in the overall
+    # gradient norm. Not clear why it happens. It doesn't matter much exactly
+    # where the gradient is clipped -- 0.5, 1, 7 -- because the spikes are much
+    # larger than that.
+    gradient_clip_val: 1
+    gradient_clip_algorithm: 'norm'

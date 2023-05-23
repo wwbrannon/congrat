@@ -1,0 +1,17 @@
+seed_everything: 2969591811
+
+data:
+    class_path: clip_graph.data.datamodule.PubmedGraphTextDataModule
+    init_args:
+        data_dir: 'data/pubmed'
+        seed: ${seed_everything}
+        mlm: false
+        batch_size: 72
+        num_workers: -1
+        pin_memory: true
+        directed: true
+
+        tokenizer_name: 'distilgpt2'
+
+        transductive: false
+        transductive_identity_features: false

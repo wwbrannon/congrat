@@ -1,0 +1,162 @@
+baselines:
+  twitter_causal_lm_baseline: &tw_causal_lm_baseline  test-text-u_wbrannon_github_clip-graph_lightning_logs_lm-pretrain_twitter-small_causal_version_1.pt
+  trex_causal_lm_baseline   : &tr_causal_lm_baseline  test-text-u_wbrannon_github_clip-graph_lightning_logs_lm-pretrain_trex_causal_version_1.pt
+  pubmed_causal_lm_baseline : &pm_causal_lm_baseline  test-text-u_wbrannon_github_clip-graph_lightning_logs_lm-pretrain_pubmed_causal_version_1.pt
+
+  twitter_masked_lm_baseline: &tw_masked_lm_baseline  test-text-u_wbrannon_github_clip-graph_lightning_logs_lm-pretrain_twitter-small_masked_version_1.pt
+  trex_masked_lm_baseline   : &tr_masked_lm_baseline  test-text-u_wbrannon_github_clip-graph_lightning_logs_lm-pretrain_trex_masked_version_1.pt
+  pubmed_masked_lm_baseline : &pm_masked_lm_baseline  test-text-u_wbrannon_github_clip-graph_lightning_logs_lm-pretrain_pubmed_masked_version_1.pt
+
+  twitter_svd_directed      : &tw_directed_gnn_baseline   test-graph-u_wbrannon_github_clip-graph_lightning_logs_gnn-pretrain-directed_twitter-small_version_3.pt
+  twitter_svd_undirected    : &tw_undirected_gnn_baseline test-graph-u_wbrannon_github_clip-graph_lightning_logs_gnn-pretrain_twitter-small_version_3.pt
+  trex_svd_directed         : &tr_directed_gnn_baseline   test-graph-u_wbrannon_github_clip-graph_lightning_logs_gnn-pretrain-directed_trex_version_5.pt
+  trex_svd_undirected       : &tr_undirected_gnn_baseline test-graph-u_wbrannon_github_clip-graph_lightning_logs_gnn-pretrain_trex_version_5.pt
+  pubmed_svd_directed       : &pm_directed_gnn_baseline   test-graph-u_wbrannon_github_clip-graph_lightning_logs_gnn-pretrain-directed_pubmed_version_5.pt
+  pubmed_svd_undirected     : &pm_undirected_gnn_baseline test-graph-u_wbrannon_github_clip-graph_lightning_logs_gnn-pretrain_pubmed_version_5.pt
+
+twitter_small:
+  causal_directed:
+    dataset_yaml_path: configs/eval-datasets/twitter-small/causal-directed.yaml
+    comparisons:
+      - slug: twitter-small-directed-test-causal-base
+        comp_texts: *tw_causal_lm_baseline
+        comp_nodes: *tw_directed_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph-directed_inductive-causal_twitter-small_version_1.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph-directed_inductive-causal_twitter-small_version_1.pt
+
+  masked_directed:
+    dataset_yaml_path: configs/eval-datasets/twitter-small/masked-directed.yaml
+    comparisons:
+      - slug: twitter-small-directed-test-masked-base
+        comp_texts: *tw_masked_lm_baseline
+        comp_nodes: *tw_directed_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph-directed_inductive-masked_twitter-small_version_1.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph-directed_inductive-masked_twitter-small_version_1.pt
+
+  causal_undirected:
+    dataset_yaml_path: configs/eval-datasets/twitter-small/causal.yaml
+    comparisons:
+      - slug: twitter-small-test-causal-base
+        comp_texts: *tw_causal_lm_baseline
+        comp_nodes: *tw_undirected_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-causal_twitter-small_version_5.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-causal_twitter-small_version_5.pt
+
+      - slug: twitter-small-test-causal-sim10
+        comp_texts: *tw_causal_lm_baseline
+        comp_nodes: *tw_undirected_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-causal_twitter-small_version_6.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-causal_twitter-small_version_6.pt
+
+  masked_undirected:
+    dataset_yaml_path: configs/eval-datasets/twitter-small/masked.yaml
+    comparisons:
+      - slug: twitter-small-test-masked-base
+        comp_texts: *tw_masked_lm_baseline
+        comp_nodes: *tw_undirected_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-masked_twitter-small_version_5.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-masked_twitter-small_version_5.pt
+
+      - slug: twitter-small-test-masked-sim10
+        comp_texts: *tw_masked_lm_baseline
+        comp_nodes: *tw_undirected_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-masked_twitter-small_version_6.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-masked_twitter-small_version_6.pt
+
+trex:
+  causal_directed:
+    dataset_yaml_path: configs/eval-datasets/trex/causal-directed.yaml
+    comparisons:
+      - slug: trex-directed-test-causal-base
+        comp_texts: *tr_causal_lm_baseline
+        comp_nodes: *tr_directed_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph-directed_inductive-causal_trex_version_0.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph-directed_inductive-causal_trex_version_0.pt
+
+  masked_directed:
+    dataset_yaml_path: configs/eval-datasets/trex/masked-directed.yaml
+    comparisons:
+      - slug: trex-directed-test-masked-base
+        comp_texts: *tr_masked_lm_baseline
+        comp_nodes: *tr_directed_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph-directed_inductive-masked_trex_version_0.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph-directed_inductive-masked_trex_version_0.pt
+
+  causal_undirected:
+    dataset_yaml_path: configs/eval-datasets/trex/causal.yaml
+    comparisons:
+      - slug: trex-test-causal-base
+        comp_texts: *tr_causal_lm_baseline
+        comp_nodes: *tr_undirected_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-causal_trex_version_0.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-causal_trex_version_0.pt
+
+      - slug: trex-test-causal-sim10
+        comp_texts: *tr_causal_lm_baseline
+        comp_nodes: *tr_undirected_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-causal_trex_version_2.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-causal_trex_version_2.pt
+
+  masked_undirected:
+    dataset_yaml_path: configs/eval-datasets/trex/masked.yaml
+    comparisons:
+      - slug: trex-test-masked-base
+        comp_texts: *tr_masked_lm_baseline
+        comp_nodes: *tr_undirected_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-masked_trex_version_0.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-masked_trex_version_0.pt
+
+      - slug: trex-test-masked-sim10
+        comp_texts: *tr_masked_lm_baseline
+        comp_nodes: *tr_undirected_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-masked_trex_version_2.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-masked_trex_version_2.pt
+
+pubmed:
+  causal_directed:
+    dataset_yaml_path: configs/eval-datasets/pubmed/causal-directed.yaml
+    comparisons:
+      - slug: pubmed-directed-test-causal-base
+        comp_texts: *pm_causal_lm_baseline
+        comp_nodes: *pm_directed_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph-directed_inductive-causal_pubmed_version_0.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph-directed_inductive-causal_pubmed_version_0.pt
+
+  masked_directed:
+    dataset_yaml_path: configs/eval-datasets/pubmed/masked-directed.yaml
+    comparisons:
+      - slug: pubmed-directed-test-masked-base
+        comp_texts: *pm_masked_lm_baseline
+        comp_nodes: *pm_directed_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph-directed_inductive-masked_pubmed_version_0.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph-directed_inductive-masked_pubmed_version_0.pt
+
+  causal_undirected:
+    dataset_yaml_path: configs/eval-datasets/pubmed/causal.yaml
+    comparisons:
+      - slug: pubmed-test-causal-base
+        comp_texts: *pm_causal_lm_baseline
+        comp_nodes: *pm_undirected_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-causal_pubmed_version_0.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-causal_pubmed_version_0.pt
+
+      - slug: pubmed-test-causal-sim10
+        comp_texts: *pm_causal_lm_baseline
+        comp_nodes: *pm_undirected_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-causal_pubmed_version_2.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-causal_pubmed_version_2.pt
+
+  masked_undirected:
+    dataset_yaml_path: configs/eval-datasets/pubmed/masked.yaml
+    comparisons:
+      - slug: pubmed-test-masked-base
+        comp_texts: *pm_masked_lm_baseline
+        comp_nodes: *pm_undirected_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-masked_pubmed_version_0.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-masked_pubmed_version_0.pt
+
+      - slug: pubmed-test-masked-sim10
+        comp_texts: *pm_masked_lm_baseline
+        comp_nodes: *pm_undirected_gnn_baseline
+        trained_texts: test-text-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-masked_pubmed_version_2.pt
+        trained_nodes: test-graph-u_wbrannon_github_clip-graph_lightning_logs_clip-graph_inductive-masked_pubmed_version_2.pt

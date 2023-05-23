@@ -1,0 +1,104 @@
+seed_everything: 2969591811
+
+data:
+    class_path: clip_graph.data.datamodule.TextDataModule
+    init_args:
+        data_dir: 'data/twitter-small'
+        seed: ${seed_everything}
+        tokenizer_name: 'sentence-transformers/all-mpnet-base-v2'
+        mlm: true
+        mlm_probability: 0.15
+        batch_size: 12
+        num_workers: -1
+        pin_memory: True
+
+model:
+    class_path: clip_graph.lit.LitPretrainLM
+    init_args:
+        model_class_name: 'LMForPretrain'
+        model_params:
+            model: 'sentence-transformers/all-mpnet-base-v2'
+            mode: 'masked'
+
+        lr: 5.0e-5
+        weight_decay: 0.0
+        eps: 1.0e-6
+        betas:
+            - 0.9
+            - 0.999
+
+        # This is the linear-decay-with-warmup LR schedule from the BERT paper
+        #
+        # n_cases = 117142  # len(dm.train_dataset.text)
+        # n_gpus = 1
+        # batch_size = 36
+        # n_epochs = 3
+        # warmup_rate = 0.10
+        #
+        # train_batch_size = n_gpus * batch_size
+        # n_steps = (n_cases // train_batch_size + 1)
+        # num_training_steps = n_steps * n_epochs
+        # num_warmup_steps = int(warmup_rate * num_training_steps)
+        num_warmup_steps: 976
+        num_training_steps: 9762
+
+trainer:
+    enable_checkpointing: true
+    callbacks:
+        - class_path: pytorch_lightning.callbacks.LearningRateMonitor
+
+        - class_path: pytorch_lightning.callbacks.DeviceStatsMonitor
+
+    #
+    # Hardware
+    #
+
+    num_nodes: 1
+    accelerator: 'gpu'
+    devices: [0]
+
+    strategy: 'ddp_find_unused_parameters_false'
+
+    precision: 16
+
+    #
+    # Logging
+    #
+
+    log_every_n_steps: 10
+    enable_model_summary: true
+    enable_progress_bar: true
+
+    # not supported with deepspeed
+    track_grad_norm: 2  # the 2-norm
+
+    logger:
+        class_path: pytorch_lightning.loggers.tensorboard.TensorBoardLogger
+        init_args:
+            save_dir: 'lightning_logs/lm-pretrain/twitter-small/'
+            name: 'masked'
+            default_hp_metric: false
+            log_graph: false
+
+    #
+    # Debugging features
+    #
+
+    deterministic: true
+    detect_anomaly: false
+
+    #
+    # Limits on epochs/steps/batches/time
+    #
+
+    max_epochs: 3
+    min_epochs: 3
+
+    #
+    # Optimization details
+    #
+
+    accumulate_grad_batches: 3
+
+    gradient_clip_val: 0.5
+    gradient_clip_algorithm: 'norm'

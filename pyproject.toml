@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools >= 46.4.0", "wheel"]  # 46.4.0 - attr: for version
+build-backend = "setuptools.build_meta"
+
+##
+## Pylint
+##
+
+[tool.pylint.master]
+jobs = 0
+persistent= "yes"
+suggestion-mode = "yes"
+
+[tool.pylint.messages_control]
+disable = [
+    "raw-checker-failed",
+    "bad-inline-option",
+    "locally-disabled",
+    "file-ignored",
+    "suppressed-message",
+    "useless-suppression",
+    "deprecated-pragma",
+    "use-symbolic-message-instead",
+    "unnecessary-pass",
+]
+
+[tool.pylint.reports]
+reports = "yes"
+score = "yes"
+
+[tool.pylint.logging]
+logging-format-style = "new"
+logging-modules = "logging"
+
+[tool.pylint.variables]
+allow-global-unused-variables = "yes"
+init-import = "no"
+
+[tool.pylint.format]
+expected-line-ending-format = "LF"
+max-line-length = 127

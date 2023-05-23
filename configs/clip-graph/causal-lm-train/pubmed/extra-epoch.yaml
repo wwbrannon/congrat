@@ -1,0 +1,122 @@
+# train the 2-epoch model an extra epoch
+
+seed_everything: 2969591811
+
+data:
+    class_path: clip_graph.data.datamodule.TextDataModule
+    init_args:
+        data_dir: 'data/pubmed'
+        seed: ${seed_everything}
+        tokenizer_name: 'distilgpt2'
+        mlm: false
+        batch_size: 4
+        num_workers: -1
+        pin_memory: True
+
+model:
+    class_path: clip_graph.lit.LitClipGraphLMTrain
+    init_args:
+        restart_ckpt_path: 'lightning_logs/clip-graph/causal-lm-train/pubmed/base/version_0/checkpoints/epoch=1-step=6912.ckpt'
+
+        lr: 5.0e-5
+        weight_decay: 0.0
+        eps: 1.0e-6
+        betas:
+            - 0.9
+            - 0.999
+
+        # This is the linear-decay-with-warmup LR schedule from the BERT paper
+        #
+        # n_cases = 36748  # len(dm.train_dataset.text)
+        # n_gpus = 3
+        # batch_size = 4
+        # n_epochs = 1
+        # warmup_rate = 0.10
+        #
+        # train_batch_size = n_gpus * batch_size
+        # n_steps = (n_cases // train_batch_size + 1)
+        # num_training_steps = n_steps * n_epochs
+        # num_warmup_steps = int(warmup_rate * num_training_steps)
+        num_warmup_steps: 306
+        num_training_steps: 3063
+
+trainer:
+    enable_checkpointing: true
+    callbacks:
+        - class_path: pytorch_lightning.callbacks.LearningRateMonitor
+
+        - class_path: pytorch_lightning.callbacks.DeviceStatsMonitor
+
+    #
+    # Hardware selection
+    #
+
+    num_nodes: 1
+    accelerator: 'gpu'
+    devices: [1, 2, 3]
+
+    strategy: 'ddp_find_unused_parameters_false'
+
+
+    #
+    # Mixed precision training
+    #
+
+    precision: 16
+
+    plugins:
+        - class_path: pytorch_lightning.plugins.precision.NativeMixedPrecisionPlugin
+          init_args:
+              precision: 16
+              device: 'cuda'
+              scaler:
+                  class_path: torch.cuda.amp.GradScaler
+                  init_args:
+                      # the default scale of 2**16 overflows early in training
+                      # and makes the gradient unstable
+                      init_scale: 256
+
+    #
+    # Logging
+    #
+
+    log_every_n_steps: 10
+    track_grad_norm: 2  # the 2-norm
+    enable_model_summary: true
+    enable_progress_bar: true
+
+    logger:
+        class_path: pytorch_lightning.loggers.tensorboard.TensorBoardLogger
+        init_args:
+            save_dir: 'lightning_logs/clip-graph/causal-lm-train/pubmed/'
+            name: 'extra-epoch'
+            default_hp_metric: false
+            log_graph: false
+
+    #
+    # Debugging features
+    #
+
+    deterministic: false  # GATConv has no deterministic implementation
+    detect_anomaly: false
+
+    #
+    # Limits on epochs/steps/batches/time
+    #
+
+    max_epochs: 1
+    min_epochs: 1
+
+    #
+    # Optimization details
+    #
+
+    accumulate_grad_batches: null
+
+    # NOTE this is very very important to avoid suddenly diverging loss;
+    # the tensorboard plots show the occasional wild spike in the overall
+    # gradient norm. Not clear why it happens. It doesn't matter much exactly
+    # where the gradient is clipped -- 0.5, 1, 7 -- because the spikes are much
+    # larger than that.
+    gradient_clip_val: 1
+    gradient_clip_algorithm: 'norm'

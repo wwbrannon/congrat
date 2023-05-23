@@ -1,0 +1,106 @@
+seed_everything: 2969591811
+
+data:
+    class_path: clip_graph.data.datamodule.PubmedGraphDataModule
+    init_args:
+        data_dir: 'data/pubmed'
+        seed: ${seed_everything}
+        num_workers: -1
+        pin_memory: true
+        directed: true
+        batch_size: 1
+
+model:
+    class_path: clip_graph.lit.LitGAE
+    init_args:
+        node_features_keys:
+            - 'graph_x'
+
+        # we do this rather than jsonargparse class_path etc so that the
+        # Lightning object can save its hyperparameters and have them be small
+        # string and integer things rather than huge binary model objects
+        model_class_name: 'GATMod'
+        model_params:
+            # has to match data
+            in_channels: 768
+
+            # encodes both mu and logstd if variational
+            out_channels: 768
+
+            hidden_channels: 64
+            d_feedforward: 128
+            num_layers: 3
+            num_heads: 2
+            dropout: 0.3
+
+        lr: 1.0e-3
+        weight_decay: 0.0
+        eps: 1.0e-6
+        betas:
+            - 0.9
+            - 0.999
+
+trainer:
+    enable_checkpointing: true
+    callbacks:
+        - class_path: pytorch_lightning.callbacks.LearningRateMonitor
+
+        - class_path: pytorch_lightning.callbacks.DeviceStatsMonitor
+
+        - class_path: pytorch_lightning.callbacks.early_stopping.EarlyStopping
+          init_args:
+              monitor: 'val_auc'
+              mode: 'max'
+              patience: 3
+              strict: true
+              check_finite: true
+              min_delta: 0.01
+
+    #
+    # Hardware
+    #
+
+    num_nodes: 1
+    accelerator: 'gpu'
+    devices: [0]
+
+    precision: 16
+
+    #
+    # Logging
+    #
+
+    log_every_n_steps: 1  # one step is one epoch
+    track_grad_norm: 2  # the 2-norm
+    enable_model_summary: true
+    enable_progress_bar: true
+
+    logger:
+        class_path: pytorch_lightning.loggers.tensorboard.TensorBoardLogger
+        init_args:
+            save_dir: 'lightning_logs/gnn-pretrain-directed/'
+            name: 'pubmed'
+            default_hp_metric: false
+            log_graph: false
+
+    #
+    # Debugging features
+    #
+
+    deterministic: false  # scatter_add_cuda_kernel has no deterministic implementation
+    detect_anomaly: false
+
+    #
+    # Limits on epochs/steps/batches/time
+    #
+
+    max_epochs: 100
+    min_epochs: 30
+
+    limit_train_batches: 1
+    limit_val_batches: 1
+    limit_test_batches: 1
+    limit_predict_batches: 1
+
+    gradient_clip_val: 1
+    gradient_clip_algorithm: 'norm'

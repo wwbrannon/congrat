@@ -1,0 +1,6 @@
+# no raw or intermediate data files, they're all really big
+*.bz2
+*.zip
+*.gz
+
+intermediate/
