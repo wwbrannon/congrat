@@ -5,6 +5,9 @@ This repo contains code for the paper [ConGraT: Self-Supervised Contrastive
 Pretraining for Joint Graph and Text
 Embeddings](https://arxiv.org/abs/2305.14321).
 
+For our updated Pubmed dataset and scripts, see [this
+repo](https://github.com/mit-ccc/pubmed-dataset).
+
 **What we're trying to do**: We want to learn a single model of the joint
 distribution of text and a graph structure, where the graph is over the entities
 generating the text. (This latter condition is what distinguishes our case from
